@@ -1,0 +1,89 @@
+---
+title: "Voters of Interest"
+author: "Stephen Klayer"
+output: html
+---
+
+```{r setup, message=FALSE,warning=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+library(tidyverse)
+library(sf)
+library(readxl)
+library(RColorBrewer)
+library(tidycensus)
+```
+
+
+
+```{r}
+voters.boe <-read_csv("C:/Users/sklay/OneDrive/Xavier/Data Science/DSCI210-f24/data/VoterListExport-20240917-pn.csv")
+voters.sos <-read_csv("C:/Users/sklay/OneDrive/Xavier/Data Science/DSCI210-f24/data/HAMILTON.txt")
+```
+
+```{r}
+voters.sos <- voters.sos %>%  
+   rename_with(~ gsub("-", ".", .))  
+
+## print out a list of the election columns... which we can identify by what they start with
+voters.sos %>%
+  select(starts_with("PRIMARY") | starts_with("GENERAL") | starts_with("SPECIAL")) %>%
+  colnames()
+
+## I only want regular spring primaries (i.e. in March or in May), regular general elections (i.e. in Nov), and the special election from Aug, 2023 because it related to abortion (a big issue in this year's election).
+print("-------- ELECTIONS THAT WE WILL CONSIDER IN OUR ANALYSIS ---------------------------")
+voters.sos %>% 
+  select(starts_with("PRIMARY.03/")|starts_with("PRIMARY.05/")|starts_with("GENERAL.11/") |starts_with("SPECIAL.08/08/2023")) %>% 
+  colnames()
+```
+
+
+
+```{r}
+election.date = "2024-11-05"
+elections.cols <- 47:127
+pres.elections = c("GENERAL.11/07/2000", "GENERAL.11/02/2004", "GENERAL.11/04/2008", "GENERAL.11/06/2012", "GENERAL.11/08/2016", "GENERAL.11/03/2020")
+gov.elections = c("GENERAL.11/05/2002","GENERAL.11/07/2006", "GENERAL.11/02/2010","GENERAL.11/04/2014","GENERAL.11/06/2018","GENERAL.11/08/2022")
+off.elections = c("GENERAL.11/06/2001","GENERAL.11/04/2003","GENERAL.11/08/2005","GENERAL.11/06/2007","GENERAL.11/03/2009","GENERAL.11/08/2011","GENERAL.11/05/2013","GENERAL.11/03/2015","GENERAL.11/07/2017","GENERAL.11/05/2019","GENERAL.11/02/2021","GENERAL.11/07/2023" )
+prim.elections = c("PRIMARY.05/07/2002","PRIMARY.05/03/2005","PRIMARY.05/02/2006","PRIMARY.05/08/2007","PRIMARY.05/05/2009","PRIMARY.05/04/2010","PRIMARY.05/03/2011","PRIMARY.05/07/2013","PRIMARY.05/06/2014","PRIMARY.05/05/2015","PRIMARY.05/02/2017","PRIMARY.05/08/2018","PRIMARY.05/07/2019","PRIMARY.05/04/2021","PRIMARY.05/03/2022","PRIMARY.05/02/2023")
+
+```
+
+
+
+```{r}
+voters.sos <- voters.sos %>%
+  mutate(AGE = floor(as.numeric(difftime(as.Date(election.date), as.Date(DATE_OF_BIRTH), units = "days")) / 365.25))
+```
+
+```{r}
+voters.under35 <- voters.sos %>% 
+  filter(AGE <= 35)
+
+n=1000
+v.u35 <- voters.under35[sample(nrow(voters.under35), n), ]
+
+ggplot(v.u35, aes(x = PARTY_AFFILIATION)) +
+  geom_bar(stat = "count", fill = "blue") +
+  labs(title = "Party Affiliation Based on People Under 35",
+       x = "Party",
+       y = "Amount of People")
+```
+
+```{r}
+voters.28D <- voters.sos %>% 
+  filter(STATE_REPRESENTATIVE_DISTRICT == 28)
+
+n=1000
+voters.28D = voters.28D[sample(nrow(voters.28D), n), ]
+
+ggplot(voters.28D, aes(x = PARTY_AFFILIATION)) +
+  geom_bar(stat = "count", fill = "blue") +
+  labs(title = "Party Affiliation Based on District 28",
+       #District that Connie was rep of
+       x = "Party",
+       y = "Amount of People")
+```

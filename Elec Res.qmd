@@ -1,0 +1,35 @@
+---
+title: "Post_ELEC_Results"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(sf)
+library(readxl)
+library(RColorBrewer)
+```
+
+```{r}
+
+
+map2024 <- st_zm(st_read("C:/Users/sklay/OneDrive/Xavier/Data Science/DSCI210-f24/data/maps/precincts_2024.shp"))
+
+results2024 <- read_excel("Results2024.xlsx")
+
+mapANDresults2024 <- left_join(map2024, results2024, by = c("PRECINCT" = "Precinct"))
+```
+
+```{r}
+mapANDresults2024 %>% 
+  mutate(Pillich.Prop = `Total Votes...5`/( `Total Votes...5`+ `Total Votes...8`)) %>%
+  ggplot(aes(fill=Pillich.prop)) +
+  geom_sf()+
+  labs(title = "2018 Senator Election in Hamilton County", 
+       subtitle = "Sherrod Brown (D) 59.3% vs Jim Renacci (R) 40.6%",
+       fill = "", 
+       caption = "")+
+  scale_fill_gradientn(colours=brewer.pal(n=6,name="RdBu"),na.value = "transparent",                        breaks=c(0,.25,0.5,.75,1),labels=c("100% Renacci","","50% / 50%","","100% Brown"),
+                           limits=c(0,1))
+```
